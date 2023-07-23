@@ -23,9 +23,12 @@ const Pagination = ({ totalPosts, postsPerPage, currentPage, setCurrentPage }: P
     <StyledNav aria-label="Page navigation example">
       <ul className="flex items-center -space-x-px h-8 text-sm">
         <li>
-          <a
-            href="#"
-            onClick={() => setCurrentPage(currentPage - 1)}
+          <button
+            onClick={() => {
+              if (currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+              }
+            }}
             className="flex items-center justify-center px-3 h-8 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
           >
             <span className="sr-only">Previous</span>
@@ -44,25 +47,28 @@ const Pagination = ({ totalPosts, postsPerPage, currentPage, setCurrentPage }: P
                 d="M5 1 1 5l4 4"
               />
             </svg>
-          </a>
+          </button>
         </li>
         {pageNumbers.map((number) => (
           <li key={number}>
-            <a
-              href="#"
+            <button
               onClick={() => setCurrentPage(number)}
               className={`flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
-                currentPage === number ? "bg-blue-500 text-blue-700" : ""
+                currentPage === number ? "text-red-500" : ""
               }`}
             >
               {number}
-            </a>
+            </button>
           </li>
         ))}
+
         <li>
-          <a
-            href="#"
-            onClick={() => setCurrentPage(currentPage + 1)}
+          <button
+            onClick={() => {
+              if (currentPage < pageNumbers.length) {
+                setCurrentPage(currentPage + 1);
+              }
+            }}
             className="flex items-center justify-center px-3 h-8 mr-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
           >
             <span className="sr-only">Next</span>
@@ -81,7 +87,7 @@ const Pagination = ({ totalPosts, postsPerPage, currentPage, setCurrentPage }: P
                 d="M1 9l4-4L1 1"
               />
             </svg>
-          </a>
+          </button>
         </li>
       </ul>
     </StyledNav>

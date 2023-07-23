@@ -3,8 +3,9 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import styled from "styled-components";
 import { app, db, storage } from "../../firebase";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import firebase from "firebase/compat/app";
+import { nanoid } from "nanoid";
 
 const StyledTitle = styled.input`
   height: 50px;
@@ -46,24 +47,48 @@ interface Post {
 
 const PostEditor = () => {
   const [content, setContent] = useState("");
-  const [userName, setuserName] = useState("");
+  const [updatedContent, setUpdatedContent] = useState("");
+  const [userName, setUserName] = useState("");
   const [title, setTitle] = useState("");
   const [answer, setAnswer] = useState("");
   const { urlId } = useParams<{ urlId: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [profileImg, setProfileImg] = useState<string | null>(null);
 
-  const postId = `${Date.now()}`;
-
-  console.log(urlId);
+  const navigate = useNavigate();
+  const postId = nanoid();
 
   const modules = {
-    toolbar: [[{ header: [1, 2, false] }], ["bold", "italic", "underline"], ["image", "code-block"]],
+    toolbar: [
+      [{ header: [1, 2, false] }],
+      ["bold", "italic", "underline", "strike", "blockquote"],
+      [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
+      ["link", "image"],
+      [{ align: [] }, { color: [] }, { background: [] }],
+      ["clean"],
+    ],
   };
+
+  const formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
+    "list",
+    "bullet",
+    "indent",
+    "link",
+    "image",
+    "align",
+    "color",
+    "background",
+  ];
 
   const fetchPosts = async () => {
     const user = app.auth().currentUser;
     if (!user) {
-      // alert("로그인이 필요합니다.");
       return;
     }
     const uid = user.uid;
@@ -77,16 +102,17 @@ const PostEditor = () => {
       console.log("User data not found");
       return;
     }
-    console.log(userData);
     const displayName = userData.name;
-    setuserName(displayName);
-    console.log(displayName);
+    setUserName(displayName);
 
-    console.log(uid);
+    if (!urlId) {
+      // If urlId is not provided, do not execute the query
+      return;
+    }
+
     const querySnapshot = await db.collection("posts").where("postId", "==", urlId).get();
     const postsData: Post[] = querySnapshot.docs.map((doc) => ({ postId: doc.id, ...doc.data() } as Post));
     setPosts(postsData);
-    console.log(postsData);
 
     if (postsData.length > 0) {
       setTitle(postsData[0].title);
@@ -96,14 +122,18 @@ const PostEditor = () => {
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    if (urlId) {
+      fetchPosts();
+    }
+  }, [urlId]);
+
+  useEffect(() => {
+    console.log(updatedContent);
+  }, [updatedContent]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log(content);
     const user = app.auth().currentUser;
-    console.log(user);
     if (!user) {
       alert("로그인이 필요합니다.");
       return;
@@ -113,111 +143,116 @@ const PostEditor = () => {
       await fetchPosts();
     }
 
-    // Find image tags in Quill editor content
     const parser = new DOMParser();
     const doc = parser.parseFromString(content, "text/html");
-    const images = doc.querySelectorAll("img");
 
-    // Upload first image to Firebase Storage and get download URL
-    let imageURL = "";
-    if (images.length > 0) {
-      const img = images[0];
+    const images = doc.querySelectorAll("img");
+    images.forEach((img) => img.remove());
+
+    const promises = [];
+    const imageURLs = [];
+
+    for (const [index, img] of images.entries()) {
       const response = await fetch(img.src);
       const blob = await response.blob();
-      const ref = storage.ref().child(`postImages/${postId}`);
-      await ref.put(blob);
-      imageURL = await ref.getDownloadURL();
+      const ref = storage.ref().child(`postImages/${postId}/${index}`);
+      const uploadTask = ref.put(blob);
+      promises.push(uploadTask);
     }
 
-    // Get user profile picture download URL
-    let photoURL = "";
-    try {
-      photoURL = await storage.ref().child(`images/${user.uid}`).getDownloadURL();
-    } catch (error) {
-      console.error(error);
+    // Wait for all image uploads to complete
+    await Promise.all(promises);
+
+    // Get download URLs for each image
+    for (let i = 0; i < images.length; i++) {
+      const ref = storage.ref().child(`postImages/${postId}/${i}`);
+      const imageURL = await ref.getDownloadURL();
+      imageURLs.push(imageURL);
     }
 
-    // Check if post exists
+    const newContent = doc.body.innerHTML;
+
+    // Get the user's photoURL
+    const userDocRef = db.collection("users").doc(user.uid);
+    const userDoc = await userDocRef.get();
+    const userPhotoURL = userDoc.exists ? userDoc.data()?.photoURL : null;
+
     if (urlId) {
-      // Check if post exists
       const querySnapshot = await db.collection("posts").where("postId", "==", urlId).get();
       if (!querySnapshot.empty) {
-        // Get existing post data
         const doc = querySnapshot.docs[0];
         const postData = doc.data() as Post;
 
-        // Delete existing image from Firebase Storage
         if (postData.imageURL) {
-          const imageRef = storage.refFromURL(postData.imageURL);
-          await imageRef.delete();
+          for (const url of postData.imageURL) {
+            const imageRef = storage.refFromURL(url);
+            await imageRef.delete();
+          }
         }
 
-        // Update existing post
         const docId = querySnapshot.docs[0].id;
         await db.collection("posts").doc(docId).update({
           postId: postId,
           title: title,
-          content,
+          content: newContent,
           answer: answer,
           uid: user.uid,
           displayName: userName,
-          email: user.email,
-          photoURL: photoURL,
-          imageURL: imageURL,
+          imageURL: imageURLs,
+          userPhotoURL: userPhotoURL,
         });
+        alert("업로드에 성공했습니다.");
+        navigate("/");
       } else {
-        // Add new post
         const docRef = db.collection("posts").doc(postId);
         await docRef.set({
           postId: postId,
           title: title,
-          content,
+          content: newContent,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           answer: answer,
           uid: user.uid,
           displayName: userName,
-          email: user.email,
-          photoURL: photoURL,
-          imageURL: imageURL,
+          imageURL: imageURLs,
+          userPhotoURL: userPhotoURL,
         });
+        alert("업로드에 성공했습니다.");
+        navigate("/");
       }
     } else {
-      // Add new post
       const docRef = db.collection("posts").doc(postId);
       await docRef.set({
         postId: postId,
         title: title,
-        content,
+        content: newContent,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         answer: answer,
         uid: user.uid,
         displayName: userName,
-        email: user.email,
-        photoURL: photoURL,
-        imageURL: imageURL,
+        imageURL: imageURLs,
+        userPhotoURL: userPhotoURL,
       });
+      alert("업로드에 성공했습니다.");
+      navigate("/");
     }
-    console.log(userName);
-  };
 
-  useEffect(() => {
     fetchPosts();
-  }, []);
+  };
 
   return (
     <StyledForm onSubmit={handleSubmit}>
       <h1 className="text-6xl">글 쓰기</h1>
-
       <StyledTitle
         type="text"
         value={title}
-        onChange={(event: { target: { value: React.SetStateAction<string> } }) => setTitle(event.target.value)}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)}
         placeholder="제목을 입력하세요"
       />
       <StyledReactQuill
         value={content}
         onChange={setContent}
         modules={modules}
+        formats={formats}
         placeholder="Compose an epic..."
         theme="snow"
       />
@@ -228,7 +263,7 @@ const PostEditor = () => {
         <input
           type="text"
           id="success"
-          onChange={(event) => setAnswer(event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setAnswer(event.target.value)}
           className="bg-green-50 border border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-green-500"
           placeholder="정답을 입력해주세요."
           value={answer}

@@ -97,6 +97,7 @@ const LoginPopup = ({ onClose }: PopupProps) => {
             console.log("로그인 정보가 없습니다");
           }
         }
+        onClose();
       })
       .catch((error) => {
         console.error(error);
@@ -169,7 +170,7 @@ const LoginPopup = ({ onClose }: PopupProps) => {
                           >
                             {" "}
                             <title>Google-color</title> <desc>Created with Sketch.</desc> <defs> </defs>{" "}
-                            <g id="Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                            <g id="Icons" stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
                               {" "}
                               <g id="Color-" transform="translate(-401.000000, -860.000000)">
                                 {" "}

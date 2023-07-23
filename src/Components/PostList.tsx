@@ -62,37 +62,43 @@ const PostList = () => {
       <section className="py-6 sm:py-12 dark:bg-gray-800 dark:text-gray-100">
         <div className="container p-6 mx-auto space-y-8">
           <div className="space-y-2 text-center">
-            <h2 className="text-3xl font-bold">오늘의 퀴즈</h2>
+            <h2 className="text-3xl font-bold">멘사 퀴즈</h2>
             <p className="font-serif text-sm dark:text-gray-400">당신의 두뇌를 시험해보세요.</p>
           </div>
         </div>
       </section>
-      <StyledList>
-        {currentPosts.map((post) => (
-          <StyledListItem key={post.id} onClick={() => handlePostClick(post)}>
-            <article className="flex flex-col dark:bg-gray-900">
-              <a rel="noopener noreferrer" href="#" aria-label="Te nulla oportere reprimique his dolorum">
-                <img alt="" className="object-cover w-full h-52 dark:bg-gray-500" src={post.imageURL} />
-              </a>
-              <div className="flex flex-col flex-1 p-6">
-                <a rel="noopener noreferrer" href="#" aria-label="Te nulla oportere reprimique his dolorum"></a>
-                <a
-                  rel="noopener noreferrer"
-                  href="#"
-                  className="text-xs tracki uppercase hover:underline dark:text-violet-400"
-                >
-                  {post.displayName}
+      <div className="mx-auto w-[1280px]">
+        <StyledList>
+          {currentPosts.map((post) => (
+            <StyledListItem key={post.id} onClick={() => handlePostClick(post)}>
+              <article className="flex flex-col dark:bg-gray-900">
+                <a rel="noopener noreferrer" href="#" aria-label="Te nulla oportere reprimique his dolorum">
+                  <img
+                    alt=""
+                    className="object-cover w-full h-52 dark:bg-gray-500"
+                    src={post.imageURL && post.imageURL.length > 0 ? post.imageURL : "/noImage.png"}
+                  />
                 </a>
-                <h3 className="flex-1 py-2 text-lg font-semibold leadi">{post.title}</h3>
-                <div className="flex flex-wrap justify-between pt-3 space-x-2 text-xs dark:text-gray-400">
-                  <span>{post.createdAt.toDate().toLocaleDateString()}</span>
-                  <span>2.1K views</span>
+                <div className="flex flex-col flex-1 p-6">
+                  <a rel="noopener noreferrer" href="#" aria-label="Te nulla oportere reprimique his dolorum"></a>
+                  <a
+                    rel="noopener noreferrer"
+                    href="#"
+                    className="text-xs tracki uppercase hover:underline dark:text-violet-400"
+                  >
+                    {post.displayName}
+                  </a>
+                  <h3 className="flex-1 py-2 text-lg font-semibold leadi">{post.title}</h3>
+                  <div className="flex flex-wrap justify-between pt-3 space-x-2 text-xs dark:text-gray-400">
+                    <span>{post.createdAt.toDate().toLocaleDateString()}</span>
+                    <span>2.1K views</span>
+                  </div>
                 </div>
-              </div>
-            </article>
-          </StyledListItem>
-        ))}
-      </StyledList>
+              </article>
+            </StyledListItem>
+          ))}
+        </StyledList>
+      </div>
       <Pagination
         totalPosts={posts.length}
         postsPerPage={postsPerPage}

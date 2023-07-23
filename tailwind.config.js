@@ -60,7 +60,7 @@ export default {
       ],
     },
   },
-  plugins: [require("daisyui")],
+  plugins: [require("daisyui"), require("tw-elements/dist/plugin.cjs")],
 };
 
 // module.exports = withMT({

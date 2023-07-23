@@ -10,13 +10,16 @@ import PostEditor from "./Components/PostEditor";
 import PostDetail from "./Components/PostDetail";
 import RankListPage from "./Pages/RankListPage";
 import ProfileEdit from "./Pages/profileEditPage";
+import QuizPage from "./Pages/QuizPage";
 
 const firebase = getFirestore(app);
 
 function App() {
   return (
     <BrowserRouter>
-      <Navibar />
+      <div className="max-w-[1280px] mx-auto">
+        <Navibar />
+      </div>
       <div>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -24,6 +27,7 @@ function App() {
           <Route path="/profile/:userId" element={<ProfilePage />} />
           <Route path="/posteditor/:urlId" element={<PostEditor />} />
           <Route path="/posteditor" element={<PostEditor />} />
+          <Route path="/quizPage" element={<QuizPage />} />
           <Route path="/posts/:postId" element={<PostDetail />} />
           <Route path="/rankList" element={<RankListPage />} />
           <Route path="/profileEdit/:uid" element={<ProfileEdit />} />

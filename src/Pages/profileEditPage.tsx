@@ -97,11 +97,7 @@ const ProfileEdit = () => {
             {image ? (
               <img className="w-24 h-24 mr-4 object-cover" src={image} alt="Avatar Upload" />
             ) : (
-              <img
-                className="w-24 h-24 mr-4 object-cover"
-                src="https://images.unsplash.com/photo-1611867967135-0faab97d1530?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1352&amp;q=80"
-                alt="Avatar Upload"
-              />
+              <img className="w-24 h-24 mr-4 object-cover" src="/noImage.png" alt="No Image" />
             )}
           </div>
           <label className="cursor-pointer ">

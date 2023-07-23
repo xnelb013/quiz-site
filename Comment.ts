@@ -7,5 +7,5 @@ export interface Comment {
   name: string;
   postId: string;
   uid: string;
-  photoURL: string;
+  userPhotoURL: string;
 }
