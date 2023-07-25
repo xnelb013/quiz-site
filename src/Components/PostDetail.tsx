@@ -298,7 +298,7 @@ const PostDetail = () => {
                   </div>
                 </div>
               )}
-              <p className="text-md dark:text-gray-400 mt-10 mb-20 text-left p-10">{parse(post.content)}</p>
+              <div className="text-md dark:text-gray-400 mt-10 mb-20 text-left p-10">{parse(post.content)}</div>
             </div>
             <div className="relative">
               <div className="flex justify-center">
