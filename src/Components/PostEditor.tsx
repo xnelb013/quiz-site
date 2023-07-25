@@ -36,6 +36,7 @@ const StyledButton = styled.button`
 `;
 
 interface Post {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   imageURL: any;
   postId: string;
   title: string;
@@ -45,30 +46,29 @@ interface Post {
   answer: string;
 }
 
+// React Quill을 사용한 에디터
 const PostEditor = () => {
   const [content, setContent] = useState("");
-  const [updatedContent, setUpdatedContent] = useState("");
   const [userName, setUserName] = useState("");
   const [title, setTitle] = useState("");
   const [answer, setAnswer] = useState("");
   const { urlId } = useParams<{ urlId: string }>();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [profileImg, setProfileImg] = useState<string | null>(null);
 
   const navigate = useNavigate();
-  const postId = nanoid();
+  const postId = urlId || nanoid();
 
+  // quill에 사용할 modules
   const modules = {
     toolbar: [
       [{ header: [1, 2, false] }],
-      ["bold", "italic", "underline", "strike", "blockquote"],
-      [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-      ["link", "image"],
+      ["bold", "italic", "underline", "strike"],
+      ["image"],
       [{ align: [] }, { color: [] }, { background: [] }],
       ["clean"],
     ],
   };
 
+  // quill에 사용할 formats
   const formats = [
     "header",
     "bold",
@@ -86,6 +86,7 @@ const PostEditor = () => {
     "background",
   ];
 
+  // 현재 로그인 유저 데이터 가져오기
   const fetchPosts = async () => {
     const user = app.auth().currentUser;
     if (!user) {
@@ -106,14 +107,12 @@ const PostEditor = () => {
     setUserName(displayName);
 
     if (!urlId) {
-      // If urlId is not provided, do not execute the query
       return;
     }
 
+    // 정보 state에 담기
     const querySnapshot = await db.collection("posts").where("postId", "==", urlId).get();
     const postsData: Post[] = querySnapshot.docs.map((doc) => ({ postId: doc.id, ...doc.data() } as Post));
-    setPosts(postsData);
-
     if (postsData.length > 0) {
       setTitle(postsData[0].title);
       setContent(postsData[0].content);
@@ -122,15 +121,18 @@ const PostEditor = () => {
   };
 
   useEffect(() => {
+    fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     if (urlId) {
       fetchPosts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlId]);
 
-  useEffect(() => {
-    console.log(updatedContent);
-  }, [updatedContent]);
-
+  // submit
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const user = app.auth().currentUser;
@@ -160,10 +162,10 @@ const PostEditor = () => {
       promises.push(uploadTask);
     }
 
-    // Wait for all image uploads to complete
+    // 이미지 업로드 지연
     await Promise.all(promises);
 
-    // Get download URLs for each image
+    // 이미들의 url담기
     for (let i = 0; i < images.length; i++) {
       const ref = storage.ref().child(`postImages/${postId}/${i}`);
       const imageURL = await ref.getDownloadURL();
@@ -172,11 +174,14 @@ const PostEditor = () => {
 
     const newContent = doc.body.innerHTML;
 
-    // Get the user's photoURL
+    // photoURL받아오기
     const userDocRef = db.collection("users").doc(user.uid);
     const userDoc = await userDocRef.get();
     const userPhotoURL = userDoc.exists ? userDoc.data()?.photoURL : null;
 
+    const userPhotoURLToSave = userPhotoURL || ""; // 빈 문자열을 기본값으로 사용
+
+    // 게시글을 수정할 때
     if (urlId) {
       const querySnapshot = await db.collection("posts").where("postId", "==", urlId).get();
       if (!querySnapshot.empty) {
@@ -192,19 +197,19 @@ const PostEditor = () => {
 
         const docId = querySnapshot.docs[0].id;
         await db.collection("posts").doc(docId).update({
-          postId: postId,
+          postId: urlId,
           title: title,
           content: newContent,
           answer: answer,
           uid: user.uid,
           displayName: userName,
           imageURL: imageURLs,
-          userPhotoURL: userPhotoURL,
+          userPhotoURL: userPhotoURLToSave,
         });
         alert("업로드에 성공했습니다.");
         navigate("/");
       } else {
-        const docRef = db.collection("posts").doc(postId);
+        const docRef = db.collection("posts").doc(urlId);
         await docRef.set({
           postId: postId,
           title: title,
@@ -214,7 +219,7 @@ const PostEditor = () => {
           uid: user.uid,
           displayName: userName,
           imageURL: imageURLs,
-          userPhotoURL: userPhotoURL,
+          userPhotoURL: userPhotoURLToSave,
         });
         alert("업로드에 성공했습니다.");
         navigate("/");
@@ -230,7 +235,7 @@ const PostEditor = () => {
         uid: user.uid,
         displayName: userName,
         imageURL: imageURLs,
-        userPhotoURL: userPhotoURL,
+        userPhotoURL: userPhotoURLToSave,
       });
       alert("업로드에 성공했습니다.");
       navigate("/");
@@ -240,41 +245,40 @@ const PostEditor = () => {
   };
 
   return (
-    <StyledForm onSubmit={handleSubmit}>
-      <h1 className="text-6xl">글 쓰기</h1>
-      <StyledTitle
-        type="text"
-        value={title}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)}
-        placeholder="제목을 입력하세요"
-      />
-      <StyledReactQuill
-        value={content}
-        onChange={setContent}
-        modules={modules}
-        formats={formats}
-        placeholder="Compose an epic..."
-        theme="snow"
-      />
-      <div className="mb-6 mt-12">
-        <label htmlFor="success" className="block mb-2 text-sm font-medium text-green-700 dark:text-green-500">
-          정답 입력
-        </label>
-        <input
+    <div className="w-[1080px] mx-auto">
+      <StyledForm onSubmit={handleSubmit}>
+        <h1 className="text-6xl">글 쓰기</h1>
+        <StyledTitle
           type="text"
-          id="success"
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setAnswer(event.target.value)}
-          className="bg-green-50 border border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-green-500"
-          placeholder="정답을 입력해주세요."
-          value={answer}
-          required
+          value={title}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)}
+          placeholder="제목을 입력하세요"
         />
-      </div>
-      <StyledButton type="submit">Submit</StyledButton>
-      <div>
-        <h1>User Posts: {urlId}</h1>
-      </div>
-    </StyledForm>
+        <StyledReactQuill
+          value={content}
+          onChange={setContent}
+          modules={modules}
+          formats={formats}
+          placeholder="Compose an epic..."
+          theme="snow"
+        />
+        <div className="mb-6 mt-12">
+          <label htmlFor="success" className="block mb-2 text-sm font-medium text-green-700 dark:text-green-500">
+            정답 입력
+          </label>
+          <input
+            type="text"
+            id="success"
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setAnswer(event.target.value)}
+            className="bg-green-50 border border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-green-500"
+            placeholder="정답을 입력해주세요."
+            value={answer}
+            required
+          />
+        </div>
+        <StyledButton type="submit">Submit</StyledButton>
+      </StyledForm>
+    </div>
   );
 };
 

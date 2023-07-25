@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { db, storage } from "../../firebase.ts";
+import Pagination from "./Pagination";
+import React from "react";
 
 interface User {
   uid: string;
@@ -10,7 +12,10 @@ interface User {
 
 const RankList = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 10;
 
+  // rankPoint 순으로 정렬
   useEffect(() => {
     const fetchUsers = async () => {
       const querySnapshot = await db.collection("users").orderBy("rankPoint", "desc").get();
@@ -25,6 +30,11 @@ const RankList = () => {
     fetchUsers();
   }, []);
 
+  // Get current posts
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentUsers = users.slice(indexOfFirstPost, indexOfLastPost);
+
   return (
     <>
       <div className="mt-40">
@@ -34,8 +44,8 @@ const RankList = () => {
           <br />
           <br />한 문제를 풀 때마다 rankPoint가 10점씩 오릅니다.
         </div>
-        {users.map((user, index) => (
-          <>
+        {currentUsers.map((user, index) => (
+          <React.Fragment key={user.uid}>
             <div className="avatar flex justify-center align-center">
               <div
                 className={`text-4xl font-black dark:text-white pt-6 mr-10 ${
@@ -52,9 +62,15 @@ const RankList = () => {
                 <div className="text-xl">RankPoint : {user.rankPoint}</div>
               </div>
             </div>
-            <div className="h-px w-full bg-blue-200 w-[700px] mx-auto mb-10"></div>
-          </>
+            <div className="h-px bg-blue-200 w-[700px] mx-auto mb-10"></div>
+          </React.Fragment>
         ))}
+        <Pagination
+          totalPosts={users.length}
+          postsPerPage={postsPerPage}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+        />
       </div>
     </>
   );

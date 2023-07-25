@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
-import firebase from "firebase/app";
+import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
-import { db } from "../../firebase";
+import { auth, db } from "../../firebase";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
@@ -33,12 +32,43 @@ interface Post {
   postId: string;
 }
 
+// 게시글 리스트 불러오기
 const PostList = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [postsPerPage] = useState(8);
   const navigate = useNavigate();
 
+  // 시간 계산
+  const timeStrings = posts.map((post) => {
+    const createdAt = post.createdAt.toDate();
+    const now = new Date();
+    const diff = now.getTime() - createdAt.getTime();
+    const diffInHours = diff / (1000 * 60 * 60);
+
+    let timeString;
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.round(diff / (1000 * 60));
+      timeString = `${diffInMinutes}분 전`;
+    } else if (diffInHours < 24) {
+      timeString = `${Math.round(diffInHours)}시간 전`;
+    } else {
+      timeString = createdAt.toLocaleDateString();
+    }
+
+    return timeString;
+  });
+
+  // 게시글 작성버튼 클릭
+  const handleClick = () => {
+    if (!auth.currentUser) {
+      alert("로그인을 해주세요");
+    } else {
+      navigate("/postEditor");
+    }
+  };
+
+  // 게시글 게시 순서대로 정렬
   const fetchPosts = async () => {
     const snapshot = await db.collection("posts").orderBy("createdAt", "desc").get();
     const posts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Post));
@@ -49,6 +79,7 @@ const PostList = () => {
     fetchPosts();
   }, [currentPage]);
 
+  // 게시글 클릭
   const handlePostClick = (post: Post) => {
     navigate(`/posts/${post.postId}`);
   };
@@ -65,12 +96,15 @@ const PostList = () => {
             <h2 className="text-3xl font-bold">멘사 퀴즈</h2>
             <p className="font-serif text-sm dark:text-gray-400">당신의 두뇌를 시험해보세요.</p>
           </div>
+          <button className="btn btn-outline btn-info text-3xl" onClick={handleClick}>
+            문제 내기
+          </button>
         </div>
       </section>
       <div className="mx-auto w-[1280px]">
         <StyledList>
-          {currentPosts.map((post) => (
-            <StyledListItem key={post.id} onClick={() => handlePostClick(post)}>
+          {currentPosts.map((post, index) => (
+            <StyledListItem key={post.id} onClick={() => handlePostClick(post)} className="cursor-pointer">
               <article className="flex flex-col dark:bg-gray-900">
                 <a rel="noopener noreferrer" href="#" aria-label="Te nulla oportere reprimique his dolorum">
                   <img
@@ -81,17 +115,12 @@ const PostList = () => {
                 </a>
                 <div className="flex flex-col flex-1 p-6">
                   <a rel="noopener noreferrer" href="#" aria-label="Te nulla oportere reprimique his dolorum"></a>
-                  <a
-                    rel="noopener noreferrer"
-                    href="#"
-                    className="text-xs tracki uppercase hover:underline dark:text-violet-400"
-                  >
-                    {post.displayName}
-                  </a>
-                  <h3 className="flex-1 py-2 text-lg font-semibold leadi">{post.title}</h3>
+                  <div>
+                    <h3 className="flex-1 py-2 text-lg font-semibold leadi h-[80px]">{post.title}</h3>
+                  </div>
                   <div className="flex flex-wrap justify-between pt-3 space-x-2 text-xs dark:text-gray-400">
-                    <span>{post.createdAt.toDate().toLocaleDateString()}</span>
-                    <span>2.1K views</span>
+                    <span>{timeStrings[index]}</span>
+                    <span>{post.displayName}</span>
                   </div>
                 </div>
               </article>

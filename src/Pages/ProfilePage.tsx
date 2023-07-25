@@ -5,7 +5,10 @@ import { Link } from "react-router-dom";
 
 const ProfilePage = () => {
   // 상태 변수 정의
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
+  const [queryPost, setQueryPost] = useState(0);
+  const [queryComment, setQueryComment] = useState(0);
   const [profileImageURL, setProfileImageURL] = useState<string | null>(null);
 
   // URL에서 uid 가져오기
@@ -33,6 +36,22 @@ const ProfilePage = () => {
       .then((url) => {
         setProfileImageURL(url);
       });
+
+    // 작성한 게시글 수
+    db.collection("posts")
+      .where("uid", "==", uid)
+      .get()
+      .then((querySnapshot) => {
+        setQueryPost(querySnapshot.size);
+      });
+
+    // 작성한 댓글 수
+    db.collection("comments")
+      .where("uid", "==", uid)
+      .get()
+      .then((querySnapshot) => {
+        setQueryComment(querySnapshot.size);
+      });
   }, [uid]);
 
   return (
@@ -46,11 +65,11 @@ const ProfilePage = () => {
                 <p className="text-gray-400">RankPoint</p>
               </div>
               <div>
-                <p className="font-bold text-gray-700 text-xl">10</p>
-                <p className="text-gray-400">Photos</p>
+                <p className="font-bold text-gray-700 text-xl">{queryPost}</p>
+                <p className="text-gray-400">Posts</p>
               </div>
               <div>
-                <p className="font-bold text-gray-700 text-xl">89</p>
+                <p className="font-bold text-gray-700 text-xl">{queryComment}</p>
                 <p className="text-gray-400">Comments</p>
               </div>
             </div>
@@ -73,25 +92,24 @@ const ProfilePage = () => {
             </div>
 
             <div className="space-x-8 flex justify-between mt-32 md:mt-0 md:justify-center">
-              <button className="text-white py-2 px-4 uppercase rounded bg-blue-400 hover:bg-blue-500 shadow hover:shadow-lg font-medium transition transform hover:-translate-y-0.5">
-                Connect
-              </button>
-              <button className="text-white py-2 px-4 uppercase rounded bg-gray-700 hover:bg-gray-800 shadow hover:shadow-lg font-medium transition transform hover:-translate-y-0.5">
-                Message
-              </button>
+              {currentUid === uid && (
+                <Link to={`/profileEdit/${uid}`}>
+                  <button className="text-white py-4 px-4 uppercase rounded bg-blue-400 hover:bg-blue-500 shadow hover:shadow-lg font-medium transition transform hover:-translate-y-0.5">
+                    수정하기
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
 
           <div className="mt-20 text-center border-b pb-12">
             {user && (
               <>
-                <h1 className="text-4xl font-medium text-gray-700">
-                  {user.name}, <span className="font-light text-gray-500">{user.gender}</span>
+                <h1 className="text-4xl font-medium text-gray-700 mb-10">
+                  {user.name} <span className="font-light text-gray-500">{user.gender}</span>
                 </h1>
-                <p className="font-light text-gray-600 mt-3">{user.id}</p>
-
-                <p className="mt-8 text-gray-500">{user.job}</p>
-                <p className="mt-2 text-gray-500">{user.education}</p>
+                <h2 className="text-xl">내 소개</h2>
+                <p className="font-light text-gray-600 mt-3">{user.produce}</p>
               </>
             )}
           </div>
@@ -99,18 +117,10 @@ const ProfilePage = () => {
           <div className="mt-12 flex flex-col justify-center">
             {user && (
               <>
-                <p className="text-gray-600 text-center font-light lg:px-16">{user.bio}</p>
                 <button className="text-indigo-500 py-2 px-4  font-medium mt-4">Show more</button>
               </>
             )}
           </div>
-          {currentUid === uid && (
-            <Link to={`/profileEdit/${uid}`}>
-              <button className="text-white py-2 px-8 uppercase rounded bg-gray-700 hover:bg-gray-800 shadow hover:shadow-lg font-medium transition transform hover:-translate-y-0.5">
-                수정하기
-              </button>
-            </Link>
-          )}
         </div>
       </div>
     </>

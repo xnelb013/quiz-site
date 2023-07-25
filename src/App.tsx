@@ -1,8 +1,6 @@
 import "./App.css";
 import Navibar from "./Components/Navibar";
-import { app } from "../firebase";
-import { BrowserRouter as Router, Route, BrowserRouter, Routes } from "react-router-dom";
-import { getFirestore } from "firebase/firestore/lite";
+import { Route, BrowserRouter, Routes } from "react-router-dom";
 import Signup from "./Pages/Signup";
 import ProfilePage from "./Pages/ProfilePage";
 import Home from "./Pages/Home";
@@ -11,8 +9,9 @@ import PostDetail from "./Components/PostDetail";
 import RankListPage from "./Pages/RankListPage";
 import ProfileEdit from "./Pages/profileEditPage";
 import QuizPage from "./Pages/QuizPage";
+import Footer from "./Components/Footer";
 
-const firebase = getFirestore(app);
+// const firebase = getFirestore(app);
 
 function App() {
   return (
@@ -20,7 +19,7 @@ function App() {
       <div className="max-w-[1280px] mx-auto">
         <Navibar />
       </div>
-      <div>
+      <div className="min-h-screen">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
@@ -33,6 +32,7 @@ function App() {
           <Route path="/profileEdit/:uid" element={<ProfileEdit />} />
         </Routes>
       </div>
+      <Footer />
     </BrowserRouter>
   );
 }

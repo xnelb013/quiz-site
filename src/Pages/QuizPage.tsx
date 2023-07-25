@@ -1,5 +1,4 @@
 import PostList from "../Components/PostList";
-
 const QuizPage = () => {
   return (
     <>

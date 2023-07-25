@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { app, db, storage } from "../../firebase";
 import { Timestamp } from "firebase/firestore";
 import styled from "styled-components";
 import React from "react";
 import { auth } from "../../firebase.ts";
 import { Comment } from "../../Comment.ts";
+import Modal from "./Modal";
 import CommentsList from "./CommentsList.tsx";
+import parse from "html-react-parser";
+
 interface Post {
   id: string;
   title: string;
@@ -46,18 +49,16 @@ const PostDetail = () => {
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
   const [profileImgURL, setProfileImgURL] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const currentUser = auth.currentUser; // AuthContext에서 현재 사용자 가져오기
 
+  //정답 칸의 변화 -> answer state 저장
   const onChange = (event: React.ChangeEvent<HTMLInputElement>) => setAnswer(event.target.value);
+
   const navigate = useNavigate();
-  function extractTextFromHtml(html: string) {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    return doc.body.textContent || "";
-  }
 
-  console.log(postId);
-
+  // storage에 uid로 저장되어 있는 이미지 불러오기
   useEffect(() => {
     if (post) {
       const getImageURL = async () => {
@@ -69,6 +70,7 @@ const PostDetail = () => {
     }
   }, [post]);
 
+  // firebase post 정보가져오기
   const fetchPost = async () => {
     const querySnapshot = await db.collection("posts").where("postId", "==", postId).get();
     if (!querySnapshot.empty) {
@@ -94,6 +96,7 @@ const PostDetail = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditClick = (postId: any) => {
     navigate(`/postEditor/${postId}`);
   };
@@ -102,6 +105,21 @@ const PostDetail = () => {
     const doc = await db.collection("posts").doc(postId).get();
     if (doc.exists) {
       const data = doc.data();
+
+      const user = app.auth().currentUser;
+      // 미 로그인 시
+      if (!user) {
+        console.log("User not found");
+        return;
+      }
+
+      // 자신의 문제에 정답을 입력했을 시
+      if (data && data.uid === user.uid) {
+        alert("자신의 문제는 풀 수 없습니다.");
+        return;
+      }
+
+      // 정답일 시
       if (data && data.answer === answer) {
         alert("정답입니다!");
 
@@ -146,11 +164,20 @@ const PostDetail = () => {
     }
   };
 
-  const handleDeleteClick = async (postId: any) => {
-    // Delete the post document from Firestore
+  const handleDeleteClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  // 게시글 삭제 시
+  const handleModalConfirm = async () => {
+    // db 삭제
     await db.collection("posts").doc(postId).delete();
 
-    // Delete the image file from Storage
+    // Storage에서 이미지 파일 삭제
     const storageRef = app.storage().ref();
     const imageRef = storageRef.child(`posts/${postId}`);
     imageRef
@@ -158,15 +185,16 @@ const PostDetail = () => {
       .then(async () => {
         await imageRef.delete();
       })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .catch((error: any) => {
         console.error("Error deleting image file:", error);
-        // 여기서 에러 처리를 할 수 있습니다.
       });
 
-    // Navigate back to the home page
+    // 홈으로 이동
     navigate("/");
   };
 
+  // 댓글 작성
   const handleCommentSubmit = async () => {
     if (currentUser) {
       try {
@@ -185,15 +213,16 @@ const PostDetail = () => {
           name: userData?.name ?? "", // users 컬렉션에서 가져온 사용자 이름 사용
           createdAt: Timestamp.now(),
           content: comment,
-          userPhotoURL, // Firebase Storage에서 가져온 이미지 URL 사용
+          userPhotoURL,
         };
-        const docRef = await db.collection("comments").add(newComment);
-        setComments((comments) => [...comments, { ...newComment, id: docRef.id }]);
+        // db 저장
+        await db.collection("comments").add(newComment);
         setComment("");
-        alert("댓글이 성공적으로 작성되었습니다.");
       } catch (error) {
         alert("오류가 발생했습니다. 다시 시도해주세요.");
       }
+    } else {
+      alert("로그인을 해주세요.");
     }
   };
 
@@ -215,10 +244,12 @@ const PostDetail = () => {
 
   useEffect(() => {
     fetchPost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
   useEffect(() => {
     fetchPost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!post) return null;
@@ -228,7 +259,9 @@ const PostDetail = () => {
       <ParentContainer>
         <Container>
           <div className="text-left">
-            <button className="text-left text-4xl mb-5 font-bold text-blue-400 pl-4">멘사 퀴즈</button>
+            <Link to="/quizPage">
+              <button className="text-left text-4xl mb-5 font-bold text-blue-400 pl-4">멘사 퀴즈</button>
+            </Link>
           </div>
           <div className="flex flex-col space-y-10 overflow-hidden rounded-lg shadow-md dark:bg-gray-900 dark:text-gray-100">
             <Header>
@@ -240,9 +273,9 @@ const PostDetail = () => {
                   className="object-cover w-16 h-16 rounded-full shadow dark:bg-gray-500"
                 />
                 <div className="flex flex-col space-y-1">
-                  <a rel="noopener noreferrer" href="#" className="text-lg font-semibold text-left">
+                  <Link to={`/profile/${post.uid}`} className="text-lg font-semibold text-left">
                     {post.displayName}
-                  </a>
+                  </Link>
                   <span className="text-lg dark:text-gray-400 text-left">
                     {post.createdAt.toDate().toLocaleDateString()}
                   </span>
@@ -265,9 +298,7 @@ const PostDetail = () => {
                   </div>
                 </div>
               )}
-              <p className="text-md dark:text-gray-400 mt-10 mb-20 text-left p-10">
-                {extractTextFromHtml(post.content)}
-              </p>
+              <p className="text-md dark:text-gray-400 mt-10 mb-20 text-left p-10">{parse(post.content)}</p>
             </div>
             <div className="relative">
               <div className="flex justify-center">
@@ -290,13 +321,14 @@ const PostDetail = () => {
               </div>
             </div>
 
-            <div className="flex flex-wrap justify-between">
+            <div className="flex flex-wrap justify-end">
+              <Modal isOpen={isModalOpen} onClose={handleModalClose} onConfirm={handleModalConfirm} />
               {post && currentUser && post.uid === currentUser.uid && (
-                <div className="space-x-2">
+                <div className="space-x-2 mb-10 mr-10">
                   <button
                     aria-label="Share this post"
                     type="button"
-                    className="p-2 text-center"
+                    className="btn btn-outline"
                     onClick={() => handleEditClick(postId)}
                   >
                     수정
@@ -304,36 +336,22 @@ const PostDetail = () => {
                   <button
                     aria-label="Bookmark this post"
                     type="button"
-                    className="p-2"
-                    onClick={() => handleDeleteClick(postId)}
+                    className="btn btn-outline btn-secondary"
+                    onClick={() => handleDeleteClick()}
                   >
                     삭제
                   </button>
                 </div>
               )}
-              <div className="flex space-x-2 text-sm dark:text-gray-400">
-                <button type="button" className="flex items-center p-1 space-x-1.5 text-right">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 512 512"
-                    aria-label="Number of likes"
-                    className="w-4 h-4 fill-current dark:text-violet-400"
-                  >
-                    <path d="M126.638,202.672H51.986a24.692,24.692,0,0,0-24.242,19.434,487.088,487.088,0,0,0-1.466,206.535l1.5,7.189a24.94,24.94,0,0,0,24.318,19.78h74.547a24.866,24.866,0,0,0,24.837-24.838V227.509A24.865,24.865,0,0,0,126.638,202.672ZM119.475,423.61H57.916l-.309-1.487a455.085,455.085,0,0,1,.158-187.451h61.71Z"></path>
-                    <path d="M494.459,277.284l-22.09-58.906a24.315,24.315,0,0,0-22.662-15.706H332V173.137l9.573-21.2A88.117,88.117,0,0,0,296.772,35.025a24.3,24.3,0,0,0-31.767,12.1L184.693,222.937V248h23.731L290.7,67.882a56.141,56.141,0,0,1,21.711,70.885l-10.991,24.341L300,169.692v48.98l16,16H444.3L464,287.2v9.272L396.012,415.962H271.07l-86.377-50.67v37.1L256.7,444.633a24.222,24.222,0,0,0,12.25,3.329h131.6a24.246,24.246,0,0,0,21.035-12.234L492.835,310.5A24.26,24.26,0,0,0,496,298.531V285.783A24.144,24.144,0,0,0,494.459,277.284Z"></path>
-                  </svg>
-                  <span>283</span>
-                </button>
-              </div>
             </div>
           </div>
         </Container>
       </ParentContainer>
       <CommentsList comments={sortedComments} currentUid={currentUser ? currentUser.uid : null} />{" "}
-      <div className="w-fullbg-white rounded-lg border p-1 md:p-3 m-10">
-        <div className="w-full px-3 mb-2 mt-6">
+      <div className="flex items-center w-[1150px] mx-auto bg-white rounded-lg border p-1 p-3 m-10 ">
+        <div className="flex-1 px-3 mb-2 mt-3.5">
           <textarea
-            className="bg-gray-100 rounded border border-gray-400 leading-normal resize-none w-full h-20 py-2 px-3 font-medium placeholder-gray-400 focus:outline-none focus:bg-white"
+            className="bg-gray-100 rounded border border-gray-400 leading-normal resize-none w-full h-24 py-2 px-3 font-medium placeholder-gray-400 focus:outline-none focus:bg-white"
             name="body"
             placeholder="Comment"
             onChange={(e) => setComment(e.target.value)}
@@ -341,9 +359,9 @@ const PostDetail = () => {
             required
           ></textarea>
         </div>
-        <div className="w-full flex justify-end px-3 my-3">
+        <div className="flex-9 flex justify-center px-3 my-3 h-20">
           <button
-            className="px-2.5 py-1.5 rounded-md text-white text-sm bg-indigo-500 text-lg"
+            className="px-2.5 py-1.5 rounded-md text-white text-sm bg-indigo-500 text-lg h-30"
             onClick={handleCommentSubmit}
           >
             댓글 작성

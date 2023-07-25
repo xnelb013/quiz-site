@@ -2,15 +2,14 @@ import { useEffect, useState } from "react";
 import LoginPopup from "./LoginPopup";
 import { getAuth, onAuthStateChanged, User, signOut } from "firebase/auth";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
-import { Link, useParams } from "react-router-dom";
-import { collection, query, where, getDocs } from "firebase/firestore"; // firestore 관련 함수를 가져옵니다.
-import { db } from "../../firebase"; // firebase 모듈에서 db 객체를 가져옵니다.
+import { Link } from "react-router-dom";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebase";
 
 interface Post {
   id: string;
   title: string;
   postId: string;
-  // ...
 }
 
 const Navibar = () => {
@@ -18,26 +17,18 @@ const Navibar = () => {
   const [image, setImage] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState(""); // 검색어를 상태로 관리합니다.
-  const [searchResults, setSearchResults] = useState<Post[]>([]); // 검색 결과를 상태로 관리합니다.
-
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log(user);
-        setUserId(user.uid);
-      } else {
-        setUserId(null);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<Post[]>([]);
 
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        setUserId(null);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -50,7 +41,6 @@ const Navibar = () => {
         const storageRef = ref(storage, `images/${user.uid}`);
         const downloadURL = await getDownloadURL(storageRef);
         setImage(downloadURL);
-        console.log(downloadURL);
       }
     };
     fetchUserImage();
@@ -76,22 +66,14 @@ const Navibar = () => {
       }
     };
     fetchSearchResults();
-  }, [searchTerm]); // 검색어가 변경될 때마다 실행됩니다.
-
-  useEffect(() => {
-    console.log(searchResults);
-  }, [searchResults]);
+  }, [searchTerm]); // 검색어가 변경될 때마다 실행
 
   const auth = getAuth();
 
   const logout = () => {
-    signOut(auth)
-      .then(() => {
-        // Sign-out successful.
-      })
-      .catch((error) => {
-        // An error happened.
-      });
+    signOut(auth).then(() => {
+      // 로그아웃
+    });
   };
 
   const popupOpen = () => {
@@ -106,8 +88,8 @@ const Navibar = () => {
     <>
       <div className="navbar bg-base-100 p-5 rounded-xl">
         <div className="flex-1">
-          <Link to={"/"} className="btn btn-ghost normal-case text-xl">
-            daisyUI
+          <Link to={"/"} className="btn btn-ghost normal-case text-3xl mr-5 text-blue-400">
+            QuizSite
           </Link>
           <Link to={"/quizPage"} className="btn btn-ghost normal-case text-xl">
             멘사 퀴즈
@@ -119,17 +101,15 @@ const Navibar = () => {
         <div className="flex-none gap-2">
           <div className="form-control relative">
             {" "}
-            {/* relative 클래스를 추가합니다. */}
             <input
               type="text"
               placeholder="Search"
               className="input input-bordered w-24 md:w-auto mr-5"
-              value={searchTerm} // input의 value를 searchTerm으로 설정합니다.
-              onChange={(e) => setSearchTerm(e.target.value)} // input의 값이 변경될 때마다 searchTerm을 업데이트합니다.
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-            {/* 검색 결과를 input 바로 아래에 보여주는 컴포넌트를 추가합니다. */}
             {searchTerm && (
-              <ul className="!fixed left-0 sm:!absolute sm:top-14 menu dropdown-content w-full sm:w-64 max-h-96 shadow rounded-box text-base-content overflow-auto bg-base-100">
+              <ul className="!fixed left-0 sm:!absolute sm:top-14 menu dropdown-content w-full sm:w-64 max-h-96 shadow rounded-box text-base-content overflow-auto bg-base-100 z-10">
                 {searchResults.length > 0 ? (
                   searchResults.map((result) => (
                     <li key={result.id}>
@@ -170,7 +150,9 @@ const Navibar = () => {
               </ul>
             </div>
           ) : (
-            <button onClick={popupOpen}>Login</button>
+            <button onClick={popupOpen} className="btn btn-outline">
+              Login
+            </button>
           )}
         </div>
       </div>

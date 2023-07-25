@@ -1,9 +1,22 @@
 /** @type {import('tailwindcss').Config} */
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const withMT = require("@material-tailwind/react/utils/withMT");
+// const withMT = require("@material-tailwind/react/utils/withMT");
+
+// module.exports = {
+//   // ...
+//   corePlugins: {
+//     preflight: false,
+//   },
+// };
 
 export default {
+  purge: {
+    content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+    options: {
+      safelist: ["h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "u"],
+    },
+  },
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
@@ -62,16 +75,3 @@ export default {
   },
   plugins: [require("daisyui"), require("tw-elements/dist/plugin.cjs")],
 };
-
-// module.exports = withMT({
-//   content: [
-//     "./index.html",
-//     "./src/**/*.{vue,js,ts,jsx,tsx}",
-//     "path-to-your-node_modules/@material-tailwind/react/components/**/*.{js,ts,jsx,tsx}",
-//     "path-to-your-node_modules/@material-tailwind/react/theme/components/**/*.{js,ts,jsx,tsx}",
-//   ],
-//   theme: {
-//     extend: {},
-//   },
-//   plugins: [],
-// });

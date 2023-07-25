@@ -13,11 +13,27 @@ const StyledNav = styled.nav`
 `;
 
 const Pagination = ({ totalPosts, postsPerPage, currentPage, setCurrentPage }: PaginationProps) => {
-  const pageNumbers = [];
-
-  for (let i = 1; i <= Math.ceil(totalPosts / postsPerPage); i++) {
-    pageNumbers.push(i);
+  if (totalPosts === 0) {
+    return null;
   }
+
+  const pageNumbers = Array.from({ length: Math.ceil(totalPosts / postsPerPage) }, (_, i) => i + 1);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < pageNumbers.length) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // for (let i = 1; i <= Math.ceil(totalPosts / postsPerPage); i++) {
+  //   pageNumbers.push(i);
+  // }
 
   return (
     <StyledNav aria-label="Page navigation example">
@@ -52,7 +68,7 @@ const Pagination = ({ totalPosts, postsPerPage, currentPage, setCurrentPage }: P
         {pageNumbers.map((number) => (
           <li key={number}>
             <button
-              onClick={() => setCurrentPage(number)}
+              onClick={handlePrevPage}
               className={`flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
                 currentPage === number ? "text-red-500" : ""
               }`}
@@ -66,7 +82,7 @@ const Pagination = ({ totalPosts, postsPerPage, currentPage, setCurrentPage }: P
           <button
             onClick={() => {
               if (currentPage < pageNumbers.length) {
-                setCurrentPage(currentPage + 1);
+                handleNextPage;
               }
             }}
             className="flex items-center justify-center px-3 h-8 mr-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"

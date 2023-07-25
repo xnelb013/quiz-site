@@ -1,13 +1,10 @@
 import styled from "styled-components";
-import { Link, useNavigate } from "react-router-dom";
-import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, UserCredential } from "firebase/auth";
+import { Link } from "react-router-dom";
+import { getAuth, signInWithEmailAndPassword, UserCredential } from "firebase/auth";
 import { FormEvent, useState } from "react";
 import { db, signInWithGoogle } from "../../firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes } from "firebase/storage";
-
-const auth = getAuth();
-const provider = new GoogleAuthProvider();
 
 const Div = styled.div`
   position: fixed;
@@ -36,11 +33,46 @@ const LoginPopup = ({ onClose }: PopupProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const navigate = useNavigate();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const saveUserInfo = async (user: any) => {
+    // Firestore 데이터베이스에서 사용자 정보 조회
+    const docRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(docRef);
 
-  const handleGoogleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    const name = user.displayName;
+    const email = user.email;
+    const photoURL = user.photoURL;
+    const uid = user.uid;
+
+    console.log(name, email, photoURL);
+
+    if (docSnap.exists()) {
+      // 사용자 정보가 존재하는 경우
+      console.log("이미 로그인 정보가 있습니다.");
+    } else {
+      // 사용자 정보가 존재하지 않는 경우
+      if (photoURL) {
+        // Firebase Storage에 사용자 프로필 사진 저장
+        const storage = getStorage();
+        const storageRef = ref(storage, `images/${uid}`);
+        const response = await fetch(photoURL);
+        const blob = await response.blob();
+        await uploadBytes(storageRef, blob);
+      }
+      await setDoc(docRef, {
+        name: name,
+        email: email,
+        uid: uid,
+        photoURL: photoURL,
+        rankPoint: 0,
+      });
+      console.log("로그인 정보가 없습니다");
+    }
+  };
+
+  // 이메일 로그인
+  const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     try {
       const auth = getAuth();
       await signInWithEmailAndPassword(auth, email, password);
@@ -51,51 +83,17 @@ const LoginPopup = ({ onClose }: PopupProps) => {
     }
   };
 
-  const handleLogin = (e: React.MouseEvent<HTMLButtonElement>) => {
+  // google 소셜 로그인
+  const handleGoogleLogin = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     signInWithGoogle()
       .then(async (res: UserCredential) => {
-        const credential = GoogleAuthProvider.credentialFromResult(res);
-        const token = credential?.accessToken;
         const user = res.user;
 
         console.log(user);
 
         if (user) {
-          // Firestore 데이터베이스에서 사용자 정보 조회
-          const docRef = doc(db, "users", user.uid);
-          const docSnap = await getDoc(docRef);
-
-          const name = user.displayName;
-          const email = user.email;
-          const photoURL = user.photoURL;
-          const uid = user.uid;
-
-          console.log(name, email, photoURL);
-
-          if (docSnap.exists()) {
-            // 사용자 정보가 존재하는 경우
-            // ...
-            console.log("이미 로그인 정보가 있습니다.");
-          } else {
-            // 사용자 정보가 존재하지 않는 경우
-            if (photoURL) {
-              // Firebase Storage에 사용자 프로필 사진 저장
-              const storage = getStorage();
-              const storageRef = ref(storage, `images/${uid}`);
-              const response = await fetch(photoURL);
-              const blob = await response.blob();
-              await uploadBytes(storageRef, blob);
-            }
-            await setDoc(docRef, {
-              name: name,
-              email: email,
-              uid: uid,
-              photoURL: photoURL,
-              rankPoint: 0,
-            });
-            console.log("로그인 정보가 없습니다");
-          }
+          await saveUserInfo(user);
         }
         onClose();
       })
@@ -115,7 +113,7 @@ const LoginPopup = ({ onClose }: PopupProps) => {
                 <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
                   로그인
                 </h1>
-                <form className="space-y-4 md:space-y-6" onSubmit={handleGoogleSubmit}>
+                <form className="space-y-4 md:space-y-6" onSubmit={handleEmailLogin}>
                   <div>
                     <label
                       htmlFor="email"
@@ -157,7 +155,7 @@ const LoginPopup = ({ onClose }: PopupProps) => {
                       <div className="bg-gray-100">
                         <button
                           className="flex items-center bg-white border border-gray-300 rounded-lg shadow-md px-6 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                          onClick={handleLogin}
+                          onClick={handleGoogleLogin}
                         >
                           <svg
                             className="h-6 w-6 mr-2"
