@@ -1,7 +1,7 @@
 // CommentsList.tsx
 import { useState } from "react";
-import { Comment } from "../../Comment";
-import { db } from "../../firebase";
+import { Comment } from "../../ts/Comment";
+import { db } from "../../ts/firebase";
 import Pagination from "./Pagination";
 import Modal from "./Modal";
 

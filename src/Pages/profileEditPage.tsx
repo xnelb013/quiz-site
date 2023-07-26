@@ -1,6 +1,6 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { db, storage } from "../../firebase";
+import { db, storage } from "../../ts/firebase";
 import ChangePwPopup from "../Components/ChangePwPopup";
 import { useNavigate } from "react-router-dom";
 

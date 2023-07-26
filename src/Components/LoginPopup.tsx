@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword, UserCredential } from "firebase/auth";
 import { FormEvent, useState } from "react";
-import { db, signInWithGoogle } from "../../firebase";
+import { db, signInWithGoogle } from "../../ts/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes } from "firebase/storage";
 

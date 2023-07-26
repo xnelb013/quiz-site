@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import styled from "styled-components";
-import { app, db, storage } from "../../firebase";
+import { app, db, storage } from "../../ts/firebase";
 import { useNavigate, useParams } from "react-router-dom";
 import firebase from "firebase/compat/app";
 import { nanoid } from "nanoid";

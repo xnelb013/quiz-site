@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { app, db, storage } from "../../firebase";
+import { app, db, storage } from "../../ts/firebase.ts";
 import { Timestamp } from "firebase/firestore";
 import styled from "styled-components";
 import React from "react";
-import { auth } from "../../firebase.ts";
-import { Comment } from "../../Comment.ts";
+import { auth } from "../../ts/firebase.ts";
+import { Comment } from "../../ts/Comment.ts";
 import Modal from "./Modal";
 import CommentsList from "./CommentsList.tsx";
 import parse from "html-react-parser";

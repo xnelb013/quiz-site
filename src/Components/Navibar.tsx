@@ -4,7 +4,7 @@ import { getAuth, onAuthStateChanged, User, signOut } from "firebase/auth";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { Link } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase";
+import { db } from "../../ts/firebase";
 
 interface Post {
   id: string;

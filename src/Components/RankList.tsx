@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { db, storage } from "../../firebase.ts";
+import { db, storage } from "../../ts/firebase.ts";
 import Pagination from "./Pagination";
 import React from "react";
 

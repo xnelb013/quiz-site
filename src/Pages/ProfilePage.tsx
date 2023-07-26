@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { db, storage } from "../../firebase";
-import { auth } from "../../firebase.ts";
+import { db, storage } from "../../ts/firebase.ts";
+import { auth } from "../../ts/firebase.ts";
 import { Link } from "react-router-dom";
 
 const ProfilePage = () => {

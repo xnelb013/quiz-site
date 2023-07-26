@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import { auth, db } from "../../ts/firebase";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import Pagination from "./Pagination";
