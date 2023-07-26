@@ -13,7 +13,8 @@ interface User {
 const RankList = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 10;
+  const [isLoading, setIsLoading] = useState(true);
+  const postsPerPage = 5;
 
   // rankPoint 순으로 정렬
   useEffect(() => {
@@ -26,6 +27,7 @@ const RankList = () => {
         user.photoURL = url;
       }
       setUsers(users);
+      setIsLoading(false);
     };
     fetchUsers();
   }, []);
@@ -44,27 +46,39 @@ const RankList = () => {
           <br />
           <br />한 문제를 풀 때마다 rankPoint가 10점씩 오릅니다.
         </div>
-        {currentUsers.map((user, index) => (
-          <React.Fragment key={user.uid}>
-            <div className="avatar flex justify-center align-center">
-              <div
-                className={`text-4xl font-black dark:text-white pt-6 mr-10 ${
-                  index === 0 ? "text-yellow-300" : index === 1 ? "text-gray-400" : index === 2 ? "text-yellow-500" : ""
-                }`}
-              >
-                {index + 1}등
-              </div>
-              <div className="w-24 h-24 rounded-xl">
-                <img src={user.photoURL} />
-              </div>
-              <div className="text-left w-96 h-32 ml-10">
-                <div className="text-3xl mb-2">{user.name}</div>
-                <div className="text-xl">RankPoint : {user.rankPoint}</div>
-              </div>
-            </div>
-            <div className="h-px bg-blue-200 w-[700px] mx-auto mb-10"></div>
-          </React.Fragment>
-        ))}
+        {isLoading ? (
+          <span className="loading loading-spinner loading-lg"></span>
+        ) : (
+          currentUsers.map((user, index) => {
+            const rank = indexOfFirstPost + index + 1;
+            let rankColorClass;
+            if (rank === 1) {
+              rankColorClass = "text-yellow-300";
+            } else if (rank === 2) {
+              rankColorClass = "text-gray-400";
+            } else if (rank === 3) {
+              rankColorClass = "text-yellow-500";
+            } else {
+              rankColorClass = "";
+            }
+
+            return (
+              <React.Fragment key={user.uid}>
+                <div className="avatar flex justify-center align-center">
+                  <div className={`text-4xl font-black dark:text-white pt-6 mr-10 ${rankColorClass}`}>{rank}등</div>
+                  <div className="w-24 h-24 rounded-xl">
+                    <img src={user.photoURL} />
+                  </div>
+                  <div className="text-left w-96 h-32 ml-10">
+                    <div className="text-3xl mb-2">{user.name}</div>
+                    <div className="text-xl">RankPoint : {user.rankPoint}</div>
+                  </div>
+                </div>
+                <div className="h-px bg-blue-200 w-[700px] mx-auto mb-10"></div>
+              </React.Fragment>
+            );
+          })
+        )}
         <Pagination
           totalPosts={users.length}
           postsPerPage={postsPerPage}

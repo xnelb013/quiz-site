@@ -121,7 +121,7 @@ const PostDetail = () => {
 
       // 정답일 시
       if (data && data.answer === answer) {
-        alert("정답입니다!");
+        alert("정답입니다! RankPoint + 10");
 
         // 현재 로그인된 사용자 가져오기
         const user = app.auth().currentUser;
@@ -292,7 +292,7 @@ const PostDetail = () => {
                         key={index}
                         src={url ? url : "/noImage.png"}
                         alt={`Image ${index + 1}`}
-                        className="object-cover w-3xl mb-4 dark:bg-gray-500"
+                        className="object-cover w-3xl mb-4 dark:bg-gray-500 mx-auto"
                       />
                     ))}{" "}
                   </div>

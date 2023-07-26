@@ -150,7 +150,7 @@ const LoginPopup = ({ onClose }: PopupProps) => {
                       required
                     />
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-center">
                     <div className="flex items-start">
                       <div className="bg-gray-100">
                         <button
@@ -210,9 +210,6 @@ const LoginPopup = ({ onClose }: PopupProps) => {
                         </button>
                       </div>
                     </div>
-                    <a href="#" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500">
-                      Forgot password?
-                    </a>
                   </div>
                   <button
                     type="submit"

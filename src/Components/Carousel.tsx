@@ -23,7 +23,7 @@ export const Carousel: React.FC = () => {
   };
 
   return (
-    <div className="h-[500px] mb-[200px] relative">
+    <div className="h-[500px] mb-[60px] relative">
       <Slider {...settings}>
         <div className="h-full relative">
           <img src="/public/carousel1.jpg" className="w-full h-[500px] object-cover" alt="캐러셀 이미지1" />

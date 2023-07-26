@@ -143,6 +143,7 @@ const Signup = () => {
                             name="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            autoComplete="off"
                           />
                         </div>
                       </div>
@@ -175,6 +176,7 @@ const Signup = () => {
                           id="integration_street_address"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
+                          autoComplete="off"
                         />
                       </div>
                       <div className="w-full flex flex-col mb-3">

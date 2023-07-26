@@ -39,8 +39,7 @@ const PostList = () => {
   const [postsPerPage] = useState(8);
   const navigate = useNavigate();
 
-  // 시간 계산
-  const timeStrings = posts.map((post) => {
+  const getTimeString = (post: Post) => {
     const createdAt = post.createdAt.toDate();
     const now = new Date();
     const diff = now.getTime() - createdAt.getTime();
@@ -57,7 +56,7 @@ const PostList = () => {
     }
 
     return timeString;
-  });
+  };
 
   // 게시글 작성버튼 클릭
   const handleClick = () => {
@@ -103,7 +102,7 @@ const PostList = () => {
       </section>
       <div className="mx-auto w-[1280px]">
         <StyledList>
-          {currentPosts.map((post, index) => (
+          {currentPosts.map((post) => (
             <StyledListItem key={post.id} onClick={() => handlePostClick(post)} className="cursor-pointer">
               <article className="flex flex-col dark:bg-gray-900">
                 <a rel="noopener noreferrer" href="#" aria-label="Te nulla oportere reprimique his dolorum">
@@ -119,7 +118,7 @@ const PostList = () => {
                     <h3 className="flex-1 py-2 text-lg font-semibold leadi h-[80px]">{post.title}</h3>
                   </div>
                   <div className="flex flex-wrap justify-between pt-3 space-x-2 text-xs dark:text-gray-400">
-                    <span>{timeStrings[index]}</span>
+                    <span>{getTimeString(post)}</span>
                     <span>{post.displayName}</span>
                   </div>
                 </div>
